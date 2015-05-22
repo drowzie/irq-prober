@@ -1,7 +1,7 @@
 /*
- * irq_prober
+ * irq-prober
  *
- * Copyright (C) 2015 Sebastien Bourdelin.
+ * Copyright (C) 2015 Savoir-faire Linux, Inc.
  *
  * Authors:
  *     Sebastien Bourdelin <sebastien.bourdelin@gmail.com>
@@ -21,8 +21,10 @@ module_param(delay, int, 0);
 static int irq = -1;
 module_param(irq, int, 0);
 
+#ifdef USE_GPIOLIB
 static int gpio = -1;
 module_param(gpio, int, 0);
+#endif
 
 static int share = 0;
 module_param(share, int, 0);
@@ -68,12 +70,16 @@ static int __init irq_prober_init(void)
 
 	INIT_WORK(&irq_wq, irq_workqueue);
 
-	/* if no irq has been choose, we used the kernel irq
+	/* if no irq has been chosen, we used the kernel irq
 	 * autoprobe feature */
+#ifdef USE_GPIOLIB
 	if (irq < 0 && gpio < 0) {
+#else
+	if (irq < 0) {
+#endif
 		irq_autoprobe();
 	}
-	/* irq have been choosen */
+	/* irq has been chosen */
 	else {
 #ifdef USE_GPIOLIB
 		if (gpio >= 0) {
