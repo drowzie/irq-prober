@@ -21,10 +21,8 @@ module_param(delay, int, 0);
 static int irq = -1;
 module_param(irq, int, 0);
 
-#ifdef USE_GPIOLIB
 static int gpio = -1;
 module_param(gpio, int, 0);
-#endif
 
 static int share = 0;
 module_param(share, int, 0);
@@ -72,16 +70,11 @@ static int __init irq_prober_init(void)
 
 	/* if no irq has been chosen, we used the kernel irq
 	 * autoprobe feature */
-#ifdef USE_GPIOLIB
 	if (irq < 0 && gpio < 0) {
-#else
-	if (irq < 0) {
-#endif
 		irq_autoprobe();
 	}
 	/* irq has been chosen */
 	else {
-#ifdef USE_GPIOLIB
 		if (gpio >= 0) {
 			err = gpio_request(gpio, MODULE_NAME);
 			if (err) {
@@ -105,7 +98,6 @@ static int __init irq_prober_init(void)
 				goto err_gpio_request;
 			}
 		}
-#endif
 
 		mask = IRQF_TRIGGER_PROBE;
 		if (share) {
@@ -123,11 +115,9 @@ static int __init irq_prober_init(void)
 
 	return 0;
 
-#ifdef USE_GPIOLIB
 err_gpio_request:
-	free_gpio(gpio);
+	gpio_free(gpio);
 	return err;
-#endif
 }
 
 static void __exit irq_prober_exit(void)
@@ -136,11 +126,9 @@ static void __exit irq_prober_exit(void)
 		free_irq(irq, &dev_id);
 	}
 
-#ifdef USE_GPIOLIB
 	if (gpio >= 0) {
-		free_gpio(gpio);
+		gpio_free(gpio);
 	}
-#endif
 
 	flush_scheduled_work();
 }
